@@ -19,7 +19,7 @@
 #
 
 # those need to be changed when do the deployments
-IP_ADRESS=127.0.0.1
+IP_ADRESS=ncrs.d2.comp.nus.edu.sg
 SINGA_AUTO_VERSION=dev
 
 # Core external configuration for SINGA-auto
