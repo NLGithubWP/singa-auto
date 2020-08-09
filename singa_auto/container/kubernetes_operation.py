@@ -172,7 +172,7 @@ class KubernetesContainerManager(ContainerManager):
             for index in range(dist_workers):
                 environment_vars["RANK"] = index
                 if node_gpuid:
-                    select_gpu, select_node_name = node_gpuid[index]["nodeName"], node_gpuid[index]["GPUID"]
+                    select_node_name, select_gpu = node_gpuid[index]["nodeName"], node_gpuid[index]["GPUID"]
 
                 if index == 0:
                     # create master, by default, first process is the master process
@@ -325,7 +325,7 @@ class KubernetesContainerManager(ContainerManager):
         if gpus > 0:
             node_gpuid = self._get_top_gpus(1)
             if node_gpuid and node_gpuid[0]:
-                select_gpu, select_node_name = node_gpuid[0]["nodeName"], node_gpuid[0]["GPUID"]
+                select_node_name, select_gpu = node_gpuid[0]["nodeName"], node_gpuid[0]["GPUID"]
                 # nodeSelector can be used to bind a pod to a node
                 nodeSelector = {NodeLabes.NodeName: select_node_name}
                 template["spec"]["nodeSelector"] = nodeSelector
