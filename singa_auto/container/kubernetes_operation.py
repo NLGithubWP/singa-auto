@@ -40,8 +40,7 @@ class KubernetesContainerManager(ContainerManager):
     def __init__(self, **kwargs):
         super().__init__()
         aToken = None
-        with open('/var/run/secrets/kubernetes.io/serviceaccount/token',
-                  'r') as fToken:
+        with open('/var/run/secrets/kubernetes.io/serviceaccount/token', 'r') as fToken:
             aToken = fToken.read()
 
         # Create a configuration object
@@ -155,10 +154,10 @@ class KubernetesContainerManager(ContainerManager):
 
             # those variables is the same for all processes
             # master process's port
-            environment_vars["MASTER_PORT"] = 23456
+            environment_vars["MASTER_PORT"] = "23456"
             # num of processes
-            environment_vars["WORLD_SIZE"] = dist_workers
-            environment_vars["PYTHONUNBUFFERED"] = 0
+            environment_vars["WORLD_SIZE"] = str(dist_workers)
+            environment_vars["PYTHONUNBUFFERED"] = "0"
 
             master_name = service_name + "-master-0"
 
@@ -167,10 +166,13 @@ class KubernetesContainerManager(ContainerManager):
             select_gpu, select_node_name = "", ""
 
             if gpus > 0:
+                # run the scheduler algorithm, choose the gpu and node for few pods.
                 node_gpuid = self._get_top_gpus(dist_workers)
 
             for index in range(dist_workers):
-                environment_vars["RANK"] = index
+                environment_vars["RANK"] = str(index)
+
+                # if scheduler is successful, get node and gpu info
                 if node_gpuid:
                     select_node_name, select_gpu = node_gpuid[index]["nodeName"], node_gpuid[index]["GPUID"]
 
@@ -179,10 +181,23 @@ class KubernetesContainerManager(ContainerManager):
                     # for master process, master name should be localhost
                     environment_vars["MASTER_ADDR"] = "localhost"
 
-                    pod_config = self._create_pod_config(service_name, master_name, docker_image,
+                    pod_config = self._create_pod_config(master_name, docker_image,
                                                          environment_vars, mounts, select_gpu, select_node_name)
                     print("pod_config", pod_config)
                     _retry(self._client_service.create_namespaced_pod)(namespace='default', body=pod_config)
+
+                    # create a service for the master pod, which is used to provide communication between worker's pod
+                    # and master's pod, (assign master's service name and port to worker's pod envs)
+                    # above is only one option
+                    # another option is to assign the master pod's ip address to worker pods' env.
+                    # will do it after pod is built.
+                    # currently we choose the first option. create a service for master's pod
+
+                    service_config = self._create_clusterip_service_config(service_name=master_name,
+                                                                           publish_port=environment_vars["MASTER_PORT"]
+                                                                           )
+
+                    _retry(self._client_service.create_namespaced_service)(namespace='default', body=service_config)
 
                 else:
                     # create worker, by default
@@ -190,7 +205,7 @@ class KubernetesContainerManager(ContainerManager):
                     environment_vars["MASTER_ADDR"] = master_name
 
                     worker_name = service_name + "-worker-{}".format(index-1)
-                    pod_config = self._create_pod_config(service_name, worker_name, docker_image,
+                    pod_config = self._create_pod_config(worker_name, docker_image,
                                                          environment_vars, mounts, select_gpu, select_node_name)
                     print("pod_config", pod_config)
                     _retry(self._client_service.create_namespaced_pod)(namespace='default', body=pod_config)
@@ -215,7 +230,6 @@ class KubernetesContainerManager(ContainerManager):
         return service
 
     def _create_pod_config(self,
-                           label_name: str,
                            service_name: str,
                            docker_image: str,
                            environment_vars: dict,
@@ -243,19 +257,20 @@ class KubernetesContainerManager(ContainerManager):
 
         if gpu_id and select_node_name:
             nodeSelector = {NodeLabes.NodeName: select_node_name}
+
             # NVIDIA_VISIBLE_DEVICES is used to expose a specific gpu to this pod
             env.append({"name": "NVIDIA_VISIBLE_DEVICES", "value": gpu_id})
 
             content = \
-                {'apiVersion': 'apps/v1',
+                {'apiVersion': 'v1',
                  'kind': 'Pod',
-                 'metadata': {'labels': {'name': label_name},
+                 'metadata': {'labels': {'name': service_name},
                               'name': service_name},
                  'spec': {'containers': [{'env': env,
                                           'image': docker_image,
                                           'imagePullPolicy': 'Always',
                                           'name': service_name,
-                                          'resources': {'limits': {'nvidia.com/gpu': 1}},
+                                          'resources': {'limits': {'nvidia.com/gpu': "1"}},
                                           'volumeMounts': volumeMounts}],
                           'nodeSelector': nodeSelector,
                           'volumes': volumes
@@ -264,9 +279,9 @@ class KubernetesContainerManager(ContainerManager):
         else:
             # this configuration is for cpu
             content = \
-                {'apiVersion': 'apps/v1',
+                {'apiVersion': 'v1',
                  'kind': 'Pod',
-                 'metadata': {'labels': {'name': label_name},
+                 'metadata': {'labels': {'name': service_name},
                               'name': service_name},
                  'spec': {'containers': [{'env': env,
                                           'image': docker_image,
@@ -435,15 +450,15 @@ class KubernetesContainerManager(ContainerManager):
 
         node_gpus = dict()
 
-        for node_info in node_infos['items']:
+        for node_info in node_infos.items:
 
             # if the node doesnt have gpu label or gpu is false, skip this node
-            if NodeLabes.Gpu not in node_info["metadata"]["labels"] or node_info["metadata"]["labels"][NodeLabes.Gpu]:
+            if NodeLabes.Gpu not in node_info.metadata.labels or not node_info.metadata.labels[NodeLabes.Gpu]:
                 continue
 
-            gpu_summary = node_info["metadata"]["labels"][NodeLabes.GpuSummary]
+            gpu_summary = node_info.metadata.labels[NodeLabes.GpuSummary]
 
-            node_name = node_info["metadata"]["labels"][NodeLabes.NodeName]
+            node_name = node_info.metadata.labels[NodeLabes.NodeName]
 
             for gpu_info in gpu_summary.split("."):
                 gpu_device_id = gpu_info.split("_")[0]
@@ -456,6 +471,18 @@ class KubernetesContainerManager(ContainerManager):
 
         print("node_gpuid:  ", node_gpuid)
         return node_gpuid
+
+    def _create_clusterip_service_config(self, service_name, publish_port):
+        content = \
+            {'apiVersion': 'v1',
+             'kind': 'Service',
+             'metadata': {'labels': {'name': service_name},
+                          'name': service_name},
+             'spec': {'ports': [{'port': publish_port, 'targetPort': publish_port}],
+                      'selector': {'name': service_name},
+                      'type': 'ClusterIP'}}
+
+        return content
 
     def _create_service_config(self,
                                service_name,
