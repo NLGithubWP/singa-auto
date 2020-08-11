@@ -34,7 +34,7 @@ Example:
             task='IMAGE_CLASSIFICATION',
             train_dataset_id='ecf87d2f-6893-4e4b-8ed9-1d9454af9763',
             val_dataset_id='7e9a2f8a-c61d-4365-ae4a-601e90892b88',
-            budget={ 'MODEL_TRIAL_COUNT': 1, "dist_workers":3, "GPU_COUNT": 3 }
+            budget={ 'MODEL_TRIAL_COUNT': 1, "DIST_WORKERS":3, "GPU_COUNT": 3 }
             model_ids='["652db9f7-d23d-4b79-945b-a56446ceff33"]',
             train_args={"use_dist": True,
                         "dist_model": "nccl" }
@@ -44,7 +44,7 @@ Example:
 
     .. code-block:: python
 
-        {'app': 'fashion_mnist_app',
+        {'app': 'DistMinist',
         'app_version': 1,
         'id': 'ec4db479-b9b2-4289-8086-52794ffc71c8'}
 .. seealso:: :meth:`singa_auto.client.Client.create_train_job`
