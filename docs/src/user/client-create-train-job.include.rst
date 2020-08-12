@@ -26,8 +26,12 @@ Example:
         'id': 'ec4db479-b9b2-4289-8086-52794ffc71c8'}
 
 Using distributed training:
+    refer to https://pytorch.org/docs/stable/distributed.html
+
 Example:
+
     .. code-block:: python
+        # if use cpu, must set dist_model to nccl
 
         client.create_train_job(
             app='DistMinist',
@@ -39,6 +43,20 @@ Example:
             train_args={"use_dist": True,
                         "dist_model": "nccl" }
         )
+        # if use cpu, must set dist_model to gloo, and dont provide GPU_COUNT
+        client.create_train_job(
+                              app='DistMinist2',
+                              task='IMAGE_CLASSIFICATION',
+                              train_dataset_id="61301c89-6e50-43f5-8662-8c195b270997",
+                              val_dataset_id="61301c89-6e50-43f5-8662-8c195b270997",
+                              models=['9f35bae8-5963-4ea9-b50c-31e667725937'],
+                              budget={'MODEL_TRIAL_COUNT': 1,
+                                      "DIST_WORKERS": 3
+                                      },
+                              train_args={"use_dist": True,
+                                          "dist_model": "gloo"}
+                              ))
+
 
     Output:
 

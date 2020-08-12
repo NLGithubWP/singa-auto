@@ -38,7 +38,6 @@ logger = logging.getLogger(__name__)
 class KubernetesContainerManager(ContainerManager):
 
     def __init__(self, **kwargs):
-        super().__init__()
         aToken = None
         with open('/var/run/secrets/kubernetes.io/serviceaccount/token', 'r') as fToken:
             aToken = fToken.read()
@@ -154,6 +153,7 @@ class KubernetesContainerManager(ContainerManager):
 
             # those variables is the same for all processes
             # master process's port
+            environment_vars["DIST_TRAIN_MODEL"] = "DIST"
             environment_vars["MASTER_PORT"] = "23456"
             # num of processes
             environment_vars["WORLD_SIZE"] = str(dist_workers)
@@ -196,7 +196,7 @@ class KubernetesContainerManager(ContainerManager):
                     service_config = self._create_clusterip_service_config(service_name=master_name,
                                                                            publish_port=environment_vars["MASTER_PORT"]
                                                                            )
-
+                    print("SVC config", service_config)
                     _retry(self._client_service.create_namespaced_service)(namespace='default', body=service_config)
 
                 else:
@@ -273,7 +273,8 @@ class KubernetesContainerManager(ContainerManager):
                                           'resources': {'limits': {'nvidia.com/gpu': "1"}},
                                           'volumeMounts': volumeMounts}],
                           'nodeSelector': nodeSelector,
-                          'volumes': volumes
+                          'volumes': volumes,
+                          "restartPolicy": "Never"
                           }
                  }
         else:
@@ -288,7 +289,9 @@ class KubernetesContainerManager(ContainerManager):
                                           'imagePullPolicy': 'Always',
                                           'name': service_name,
                                           'volumeMounts': volumeMounts}],
-                          'volumes': volumes
+                          'volumes': volumes,
+                          "restartPolicy": "Never"
+
                           }
                  }
         return content
@@ -478,7 +481,7 @@ class KubernetesContainerManager(ContainerManager):
              'kind': 'Service',
              'metadata': {'labels': {'name': service_name},
                           'name': service_name},
-             'spec': {'ports': [{'port': publish_port, 'targetPort': publish_port}],
+             'spec': {'ports': [{'port': int(publish_port), 'targetPort': int(publish_port)}],
                       'selector': {'name': service_name},
                       'type': 'ClusterIP'}}
 
