@@ -23,7 +23,7 @@ import os
 # Run install command
 install_command = os.environ.get('WORKER_INSTALL_COMMAND', '')
 
-for i in range(2):
+for i in range(10):
     exit_code = os.system(install_command)
     if exit_code != 0:
         print('Install command gave non-zero exit code: "{}"'.format(install_command))
