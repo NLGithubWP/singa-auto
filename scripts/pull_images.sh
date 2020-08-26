@@ -24,7 +24,7 @@ else
 	export HOST_WORKDIR_PATH=$PWD
 fi
 
-source $HOST_WORKDIR_PATH//scripts/base_utils.sh
+source $HOST_WORKDIR_PATH/scripts/base_utils.sh
 
 pull_image()
 {
