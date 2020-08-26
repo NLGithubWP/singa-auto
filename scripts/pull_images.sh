@@ -31,8 +31,7 @@ pull_image()
     # -q == --quiet, Only display numeric IDs
     if [[ ! -z $(docker images -q $1) ]]
     then
-        docker pull $1 || exit 1
-#        echo "$1 already exists locally, thus will not pull. Using local version of $1"
+        echo "$1 already exists locally, thus will not pull. Using local version of $1"
     else
         docker pull $1 || exit 1
     fi
