@@ -45,6 +45,8 @@ import Typography from '@material-ui/core/Typography';
 import Divider from '@material-ui/core/Divider';
 import Button from '@material-ui/core/Button';
 import LinearProgress from '@material-ui/core/LinearProgress';
+import Grid from '@material-ui/core/Grid'
+import {CSVLink} from "react-csv";
 
 
 const styles = theme => ({
@@ -122,7 +124,10 @@ class TrialDetails extends React.Component {
 
     for (const i in logs.plots) {
       const { series, plotOption } = getPlotDetails(logs.plots[i], logs.metrics)
-      plotManager.updatePlot(`plot-${i}`, series, plotOption)
+      console.log(series, plotOption)
+      for (const j in logs.plots[i].metrics) {
+          plotManager.updatePlot(`plot-${j}`, series[j], plotOption)
+      }
     }
   }
 
@@ -208,7 +213,17 @@ class TrialDetails extends React.Component {
   renderLogsPlots() {
     const { logs } = this.state
     const { classes } = this.props
+    var csv = null
+    function convertToCSV(arr) {
+      const array = [Object.keys(arr[0])].concat(arr)
 
+      return array.map(it => {
+        return Object.values(it).toString()
+      }).join('\n')
+    }
+    if (logs.metrics.length > 0) {
+      csv = convertToCSV(logs.metrics);
+    }
     return (
       // Show plots section if there are plots
       Object.values(logs.plots).length > 0 && (
@@ -216,19 +231,25 @@ class TrialDetails extends React.Component {
           <Typography gutterBottom variant="h3">
             Plots
           </Typography>
-          {Object.values(logs.plots).map((x, i) => {
-            return (
-              <Paper
-                key={x.title}
-                id={`plot-${i}`}
-                className={classes.plotPaper}
-              ></Paper>
-            )
-          })}
+          <Grid container spacing={24}>
+            {Object.values(logs.plots[0].metrics).map((x, i) => {
+              return (
+                <Grid item sm={6}>
+                  <Paper
+                    key={x.title}
+                    id={`plot-${i}`}
+                    className={classes.plotPaper}
+                  ></Paper>
+                </Grid>
+              )
+            })} 
+          </Grid>
+          {logs.metrics.length > 0 && (<CSVLink data={csv}><Typography variant="h5" gutterBottom align="center">Download plot values</Typography></CSVLink>)}
         </React.Fragment>
       )
     )
   }
+
 
   renderLogsMessages() {
     const { logs } = this.state

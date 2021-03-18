@@ -19,11 +19,11 @@
 
 FROM ubuntu:16.04
 
-RUN apt-get update && apt-get -y upgrade
 
 # Install conda with pip and python 3.6
 ARG CONDA_ENVIORNMENT
-RUN apt-get -y install curl bzip2 \
+RUN apt-get update --fix-missing && apt-get -y upgrade && apt-get install -y \
+  curl bzip2 \
   && curl -sSL https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -o /tmp/miniconda.sh \
   && bash /tmp/miniconda.sh -bfp /usr/local \
   && rm -rf /tmp/miniconda.sh \
@@ -40,18 +40,13 @@ WORKDIR $DOCKER_WORKDIR_PATH
 ENV PYTHONPATH $DOCKER_WORKDIR_PATH
 
 # Install python dependencies
-COPY singa_auto/requirements.txt singa_auto/requirements.txt
+COPY singa_auto/ singa_auto/
 RUN pip install -r singa_auto/requirements.txt
-COPY singa_auto/utils/requirements.txt singa_auto/utils/requirements.txt
 RUN pip install -r singa_auto/utils/requirements.txt
-COPY singa_auto/meta_store/requirements.txt singa_auto/meta_store/requirements.txt
 RUN pip install -r singa_auto/meta_store/requirements.txt
-COPY singa_auto/container/requirements.txt singa_auto/container/requirements.txt
 RUN pip install -r singa_auto/container/requirements.txt
-COPY singa_auto/admin/requirements.txt singa_auto/admin/requirements.txt
 RUN pip install -r singa_auto/admin/requirements.txt
 
-COPY singa_auto/ singa_auto/
 COPY scripts/ scripts/
 
 EXPOSE 3000
