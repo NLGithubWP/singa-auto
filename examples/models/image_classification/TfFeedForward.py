@@ -94,12 +94,7 @@ class TfFeedForward(ImageClfBase):
 
         with self._graph.as_default():
             with self._sess.as_default():
-                if kwargs["shared_params"]:
-                    print("loading models...", kwargs["shared_params"])
-                    self._model = keras.models.load_model(kwargs["shared_params"])
-                else:
-                    print("building model....")
-                    self._model = self._build_model(num_classes, dataset.image_size)
+                self._model = self._build_model(num_classes, dataset.image_size)
                 self._model.fit(np.asarray(images),
                                 np.asarray(classes),
                                 verbose=0,

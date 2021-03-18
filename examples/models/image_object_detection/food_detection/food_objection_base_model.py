@@ -88,7 +88,6 @@ class FoodDetectionBase(ObjtDetModel):
                 result = dict()
                 result['status'] = "ok"
                 result['predictions'] = []
-
                 print("Detection is done, begin to do the classification")
                 for index, box in enumerate(predications):
                     prob = box[1]
