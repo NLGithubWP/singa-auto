@@ -62,7 +62,7 @@ def tune_model(
 
     # Read budget options from CLI args
     budget_from_args = _maybe_read_budget_from_args()
-    budget = {**(budget or {}), **budget_from_args}
+    budget = {**budget_from_args, **(budget or {})}
     inform_user(f'Using budget {budget}...')
 
     # Make advisor
@@ -121,7 +121,7 @@ def tune_model(
         shared_params = _pull_shared_params(proposal, param_cache)
 
         # Worker trains model
-        print('Training model...')
+        print('Training model...', "Shared Params", shared_params)
 
         if annotation_dataset_path:
             model_inst.train(train_dataset_path,
