@@ -49,8 +49,10 @@ class METADATA(Structure):
                 ("names", POINTER(c_char_p))]
 
 import os
-print(os.getcwd())
-lib = CDLL("./libdarknet_gpu_server.so", RTLD_GLOBAL)
+cc = os.getcwd()
+print(cc)
+print(os.listdir(cc))
+lib = CDLL("libdarknet_gpu_server.so", RTLD_GLOBAL)
 lib.network_width.argtypes = [c_void_p]
 lib.network_width.restype = c_int
 lib.network_height.argtypes = [c_void_p]
