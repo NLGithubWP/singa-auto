@@ -52,7 +52,7 @@ import os
 cc = os.getcwd()
 print(cc)
 print(os.listdir(cc))
-lib = CDLL("libdarknet_gpu_server.so", RTLD_GLOBAL)
+lib = CDLL("/home/xingnaili/716_exp_singaauto/singa-auto/singa_auto/darknet/libdarknet_gpu_server.so", RTLD_GLOBAL)
 lib.network_width.argtypes = [c_void_p]
 lib.network_width.restype = c_int
 lib.network_height.argtypes = [c_void_p]
