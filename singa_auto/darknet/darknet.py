@@ -157,7 +157,7 @@ if __name__ == "__main__":
 
     meta = load_meta(b"/hdd1/xingnaili/models_to_upload/model55/model55/food.names")
     r = detect(net, meta, b"/home/xingnaili/716_exp_singaauto/singa-auto/examples/data/object_detection/000002.jpg")
-    print(r)
+    print("detection result is ", r)
 
 
 
