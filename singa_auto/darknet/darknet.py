@@ -151,10 +151,11 @@ def detect(net, meta, image, thresh=.5, hier_thresh=.5, nms=.45):
 
 
 if __name__ == "__main__":
-    net = load_net(b"/home/xingnaili/716_exp_singaauto/singa-auto/examples/models_to_upload/model55/model55/yolov3-food.cfg", b"/home/xingnaili/716_exp_singaauto/singa-auto/examples/models_to_upload/model55/model55/yolov3-food_final.weights",
+    net = load_net(b"/hdd1/xingnaili/models_to_upload/model55/model55/yolov3-food.cfg",
+                   b"/hdd1/xingnaili/models_to_upload/model55/model55/yolov3-food_final.weights",
                    0)
 
-    meta = load_meta(b"/home/xingnaili/716_exp_singaauto/singa-auto/examples/models_to_upload/model55/model55/food.names")
+    meta = load_meta(b"/hdd1/xingnaili/models_to_upload/model55/model55/food.names")
     r = detect(net, meta, b"/home/xingnaili/716_exp_singaauto/singa-auto/examples/data/object_detection/000002.jpg")
     print(r)
 
